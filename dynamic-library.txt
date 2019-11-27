@@ -1,0 +1,73 @@
+动态链接路径问题
+
+    test.c
+    compiler.mk
+    Makefile
+    lib1 -------| Makefile
+                | func1.c
+                
+    lib2 -------| Makefile
+                | func2.c
+
+
+
+-------------------------------------------------------------------------------
+Makefile:
+test: test.c lib1/libfunc1.so lib2/libfunc2.so
+    $(CC) -o $@ $< -Llib1 -lfunc1 -Wl,-rpath=lib2 -lc
+
+lib1/libfunc1.so: lib2/libfunc2.so
+    $(MAKE) -C lib1
+
+lib2/libfunc2.so:
+    $(MAKE) -C lib2
+clean:
+    $(RM) test
+    $(MAKE) -c lib1 clean
+    $(MAKE) -c lib2 clea
+-------------------------------------------------------------------------------
+lib1/Makefile:
+include ../compiler.mk
+libfunc1.so: func1.o
+    $(CC) -shared -o $@ $<  -L../lib2 -lfunc2
+
+func1.o: func1.c
+    $(CC) -fPIC -c  $<
+
+clean:
+    $(RM) libfunc1.so func1.o
+-------------------------------------------------------------------------------
+lib2/Makefile
+include ../compiler.mk
+libfunc2.so: func2.o
+    $(CC) -shared -o $@ $<
+
+func2.o:func2.c
+    $(CC) -fPIC -c $<
+
+clean:
+    $(RM) libfunc2.so func2.o
+-------------------------------------------------------------------------------
+compiler.mk
+CC = arm-linux-gcc
+-------------------------------------------------------------------------------
+test.c
+void func1();
+main()
+{
+    func1();
+}
+
+func1.c
+void func2();
+func1()
+{
+    func2();   
+}
+
+func2.c
+void func2(){}
+
+1. .so 文件必须通过 .o 文件生成，否则失去动态链接特性
+2. 运行时只需将 lib1 加入 LD_LIBRARY_PATH
+

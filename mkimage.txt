@@ -1,0 +1,17 @@
+Usage: mkimage -l image
+-l ==> list image header information
+./mkimage -A arch -O os -T type -C comp -a addr -e ep -n name -d data_file[:data_file...] image
+-A ==> set architecture to 'arch'
+-O ==> set operating system to 'os'
+-T ==> set image type to 'type'
+-C ==> set compression type 'comp'
+-a ==> set load address to 'addr' (hex)
+-e ==> set entry point to 'ep' (hex)
+-n ==> set image name to 'name'
+-d ==> use image data from 'datafile'
+-x ==> set XIP (execute in place)
+
+sample:
+    mkimage -n 'linux-2.6.14' -A arm -O linux -T kernel -C none -a 0x30008000 -e 0x30008000 -d zImage uImage
+
+    mkimage -A arm -O linux -T ramdisk -a 0x8C800000 -n "Linux RAMDISK" -d initrd.img ramdisk.ub

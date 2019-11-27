@@ -1,0 +1,44 @@
+1. 多文件组织的驱动 Makefile
+
+##########################################
+# Makefile (!not makefile)
+#ifneq ($(KERNELRELEASE),)
+MODULE_NAME := gpio                    # 模块名，面向向上级目录
+$(MODULE_NAME)-y = main.o read.o       # 对应 .c 文件名
+obj-m       := $(MODULE_NAME).o
+#else
+KDIR        := /home/fang/linux-4.4
+PWD         := `pwd`
+default:
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) clean
+#endif
+
+2. 将驱动模块加入内核结构
+  1. 改写 Makefile:
+
+MODULE_NAME := gpio
+$(MODULE_NAME)-y    = main.o read.o
+obj-$(CONFIG_GPIO)  := $(MODULE_NAME).o
+
+  2. 添加 Kconfig
+#
+# GPIO as LED 
+#
+menu "GPIO LED"     # 向上级菜单提示
+
+config GPIO         # 此处  GPIO 对应 Makefile 中 CONFIG_GPIO
+  tristate "diyed gpio led"   # tristate or bool 
+  default y
+  help
+      When doubt, say 'YES'.
+endmenu
+
+  3. 上级 Makefile 增加一项
+obj-$(CONFIG_GPIO)       += LED/   # 此处 CONFIG_GPIO与前面对应, LED 是目录
+
+  4. 上级 Kconfig 增加入口
+source "drivers/char/LED/Kconfigfig"
+

@@ -1,0 +1,17 @@
+借 openELEC 编译结构编译系统
+
+系统启动 dbus-daemon
+systemd 启动 udev
+/usr/lib/system/systemd-udev
+启动udev 后Xorg可捕捉鼠标
+udevadm trigger 激活
+图形启动(一次性)
+/usr/local/bin/gdk-pixbuf-query-loaders --update-cache
+
+/usr/bin/gdk-pixbuf-query-loaders > /usr/etc/gtk-2.0/gdk-pixbuf.loaders
+
+字体启动(一次性)
+
+/usr/local/bin/pango-querymodules --update-cache pango-querymodules   /usr/etc/pango/pango.modules
+
+pc上的 /usr/share/alsa 可以用于 x210

@@ -1,0 +1,11 @@
+automatic mount usb disk in udevd without systemd.
+
+1. install udevil
+change ACTION in 95-udevil-mount.rules:
+
+ACTION="add", RUN+="/usr/bin/udevil --mount /dev/%k"
+ACTION="remove", RUN+="/usr/bin/udevil --umount /dev/%k"
+
+Here %k refers to KERNEL module name (sda1, sda2, etc)
+mount and umount must be in /usr/bin.
+RUN command must have absolute pathname

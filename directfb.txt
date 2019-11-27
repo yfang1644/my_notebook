@@ -1,0 +1,6 @@
+gtk on directfb
+目录结构很重要，让gtk-demo 找到
+/usr/lib/directfb-1.4.0/systems/libdirectfb-fbdev.so
+否则 cannot open display
+
+gtk 版本 配合，gtk+-2.20.1不能用

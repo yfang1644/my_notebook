@@ -1,0 +1,108 @@
+1. 创建或者复制 /etc/locale.gen
+
+locale.gen 配置文件大致如下：
+
+# This file lists locales that you wish to have built. You can find a list
+# of valid supported locales at /usr/share/i18n/SUPPORTED, and you can add
+# user defined locales to /usr/local/share/i18n/SUPPORTED. If you change
+# this file, you need to rerun locale-gen.
+
+# en_PH ISO-8859-1
+# en_PH.UTF-8 UTF-8
+# en_SG ISO-8859-1
+# en_SG.UTF-8 UTF-8
+# en_US ISO-8859-1
+# en_US.ISO-8859-15 ISO-8859-15
+en_US.UTF-8 UTF-8
+# en_ZA ISO-8859-1
+# yi_US.UTF-8 UTF-8
+# yo_NG UTF-8
+# zh_CN GB2312
+# zh_CN.GB18030 GB18030
+# zh_CN.GBK GBK
+# zh_CN.UTF-8 UTF-8
+# zh_HK BIG5-HKSCS
+# zh_HK.UTF-8 UTF-8
+# zh_SG GB2312
+# zh_SG.GBK GBK
+# zh_SG.UTF-8 UTF-8
+# zu_ZA.UTF-8 UTF-8
+
+
+2. 复制交叉编译器里的 usr/share/i18n, usr/share/locales
+   和命令 locale, localedef
+
+locale-gen 命令:(/usr/share/i18n/ locales 和命令 locale,localedef
+等等来自交叉编译工具).
+
+3. 创建 /usr/lib/locale
+
+4. 创建脚本 /usr/sbin/locale-gen:
+
+#!/bin/sh
+
+set -e
+
+LOCALEGEN=/etc/locale.gen
+LOCALES=/usr/share/i18n/locales
+USER_LOCALES=/usr/local/share/i18n/locales
+if [ -n "$POSIXLY_CORRECT" ]; then
+  unset POSIXLY_CORRECT
+fi
+
+
+[ -f $LOCALEGEN ] || exit 0;
+[ -s $LOCALEGEN ] || exit 0;
+
+KEEP=
+if [ "$1" = '--keep-existing' ]; then
+	KEEP=1
+fi
+
+if [ -z "$KEEP" ]; then
+	# Remove all old locale dir and locale-archive before generating new
+	# locale data.
+	rm -rf /usr/lib/locale/locale-archive || true
+fi
+
+umask 022
+
+is_entry_ok() {
+  if [ -n "$locale" -a -n "$charset" ] ; then
+    true
+  else
+    echo "error: Bad entry '$locale $charset'"
+    false
+  fi
+}
+
+echo "Generating locales (this might take a while)..."
+while read locale charset; do \
+	case $locale in \#*) continue;; "") continue;; esac; \
+	is_entry_ok || continue
+	if [ "$KEEP" ] && PERL_BADLANG=0 perl -MPOSIX -e \
+	    'exit 1 unless setlocale(LC_ALL, $ARGV[0])' "$locale"; then
+		continue
+	fi
+	echo -n "  `echo $locale | sed 's/\([^.\@]*\).*/\1/'`"; \
+	echo -n ".$charset"; \
+	echo -n `echo $locale | sed 's/\([^\@]*\)\(\@.*\)*/\2/'`; \
+	echo -n '...'; \
+	if [ -f $USER_LOCALES/$locale ] ; then
+	    input=$USER_LOCALES/$locale
+        elif [ -f $LOCALES/$locale ]; then 
+	    input=$locale
+        else
+	    input=`echo $locale | sed 's/\([^.]*\)[^@]*\(.*\)/\1\2/'`
+	    if [ -f $USER_LOCALES/$input ]; then
+	        input=$USER_LOCALES/$input
+            fi
+	fi
+	localedef -i $input -c -f $charset -A /usr/share/locale/locale.alias $locale || :; \
+	echo ' done'; \
+done < $LOCALEGEN
+echo "Generation complete."
+
+
+iconv_open() 错误，cannot conver UTF-8 -> UTF32LE
+复制交叉编译器里的 iconv、iconvconfig等等，以及 lib/gconv目录到目标系统

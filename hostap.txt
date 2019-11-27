@@ -1,0 +1,93 @@
+ 由于度娘吞链凶猛，所以此文没有链接，需要参考文章链接的请访问原文https://blog-kongkong.rhcloud.com/?p=65
+ 这里有个Ubuntu下建立AP模式热点的简易方法：
+ How To Set Up A Wireless Hotspot (Access Point Mode) That Supports Android In Ubuntu
+ 这篇文章可能要科学上网才能看到，所以我简单介绍以下步骤。
+ 首先安装ap-hotspot：
+ view source
+ 1 sudo add-apt-repository ppa:nilarimogard/webupd8
+ 2 sudo apt-get update
+ 3 sudo apt-get install ap-hotspot
+
+ 然后运行：
+ 1 sudo ap-hotspot start
+
+ 第一次运行“start”会要求你输入网络信息与热点名称密码等。
+ 下次直接运行上面的命令就OK了。
+ 要查看ap-hotsopt的所有指令，直接输入“ap-hotspot”即可
+
+
+ 然而现实是残酷的。当我敲完“sudo ap-hotspot start”后，输出提示我的网卡不支持建立AP模式热点。
+
+
+ 经过几天研究后，终于发现我的Broadcom网卡并不是不支持AP模式热点，只是使用的驱动不对而已。
+ 如何切换驱动以让无线网卡在Ubuntu下支持AP模式呢？如下：
+ 首先查看你的当前网卡驱动到底支不支持AP模式，终端输入：
+ 1 ifconfig
+
+ 输出信息中很容易成可以看出你的无线网卡是哪个，比如我的信息是：（以下信息经过简化，具体的会复杂一些）
+  eth0 Link encap:Ethernet HWaddr 84:34:97:6b:0b:4d
+  lo Link encap:Local Loopback
+  wlan0 Link encap:Ethernet HWaddr 08:3e:8e:1f:99:76
+ 
+  显而易见我的无线网卡是“wlan0”
+ 
+  然后查看无线网卡“wlan0”驱动的具体信息：
+ ethtool -i wlan0
+
+ 若提示无ethtool此工具，可以安装一个：
+ sudo apt-get install ethtool
+
+ 我的输出结果第一行就是：
+ 1 driver: wl0
+
+ 可见驱动是“wl0”。
+ 然后是最关键的，确定你的当前无线网卡驱动到底支不支持AP模式：
+ 1 xuqiankun@xuqiankun-Ubuntu:~$ sudo iwconfig wlan0 mode master
+ 2 Password:
+ 3 Error for wireless request "Set Mode" (8B06) :
+ 4 SET failed on device wlan0 ; Invalid argument.
+
+ 可以看到执行错误，所以不支持AP模式了。
+ 有些新的网卡用的是mac80211 framework，所有要用以下方法测试，终端输入：
+ 1 iw list
+
+ 我的输出：
+ 1 Supported interface modes:
+ 2 * IBSS
+ 3 * managed
+
+ 可以看到supported interface modes下面并没有“AP”，所以我的网卡是确定不支持AP模式了。
+ 以上测试方法参考自荒野无灯的博客（链接）
+ 本来都到这一步了，只能用荒野无灯推荐的水星USB网卡了。但是天无绝人之路！（以下只在Broadcom无线网卡上测试过，其余品牌网卡仅供参考）
+ 我在驱动支持列表（链接）中看到，Broadcom网卡的四种驱动“b43”“b43legacy”“brcmfmac”“brcmsmac”中，只有brcmfmac一种不支持AP模式的WIFI热点。但是我的明明是Broadcom网卡，为什么驱动却是莫名其妙的“wl0”呢？
+ 是不是可以换成支持AP模式的驱动，我的笔记本就可以建立AP模式的热点呢？于是在网上狂搜一番，终于给我找到了个解决方法。
+ 首先查看你的无线网卡驱动芯片：
+ 1 lspci -vvnn | grep 14e4
+
+ 我的输出信息：
+ 1 08:00.0 Network controller [0280]: Broadcom Corporation BCM4313 802.11bgn Wireless Network Adapter [14e4:4727] (rev 01)
+
+ 可以看到，我的Chip ID 是 BCM4313，PCI-ID 是 [14e4:432b]。所以我的显卡芯片是BCM4313。
+ 在 WifiDocs/Driver/bcm43xx （链接）中的“Drivers available in Ubuntu”中，可以看到芯片为“BCM4313”的网卡支持的驱动有“wl”与“brcmsmac”两种，我的默认就是“wl”这个坑爹货了。又从驱动支持列表（链接）看到“brcmsmac”是支持AP模式的。于是果断动手。
+ 先安装 firmware-b43-installer package（因为我找到完整方法时，这一步早已做过，所以不知是否必要）。
+ 参考：链接
+ 1 sudo apt-get install firmware-b43-installer
+ 然后进行驱动间的切换：
+ 首先关闭已有无线网卡驱动模块：
+ 1 sudo modprobe -r b43 bcma
+ 2 sudo modprobe -r brcmsmac bcma
+ 3 sudo modprobe -r wl
+ 然后加载“brcmsmac”驱动：
+ 1 sudo modprobe brcmsmac
+
+ 然后运行：
+ 1 iw list
+
+ 可见输出：
+ 1 Supported interface modes:
+ 2 * IBSS
+ 3 * managed
+ 4 * AP
+ 5 * AP/VLAN
+ 6 * monitor
+ 已经有AP了。

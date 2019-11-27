@@ -1,0 +1,14 @@
+depends:
+    python
+        tk  (to build Tkinter)
+            tcl
+            libx11
+                libxcb
+        netbsd-curses or ncurses
+
+libxcb needs host python
+
+_ncurse.so needs ncurses, not netbsd-curses
+
+patch setup.py: add 'termcap' to curses_libs
+compile 32bit python-applications must set CFLAGS to target include-dir

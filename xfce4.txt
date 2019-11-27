@@ -1,0 +1,6 @@
+xfce4图标消失问题：
+   chmod +s /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+   安装 xfdesktop
+
+   gnome-terminal 不能启动
+   据说是 locale 问题。

@@ -1,0 +1,9 @@
+批量处理文件名：
+
+#!/bin/sh
+for f in `ls gbkkai??\.tfm` 
+do
+    echo $f
+    ln -s $f `echo $f |sed 's/kai/kaisl/1'`
+done
+
