@@ -1,0 +1,23 @@
+$ ir-keytable -p nec -t
+
+    press keys to response scancode.
+
+Create /storage/.config/rc_keymaps/my_custom_remote:
+
+# table my_custom_remote, type: nec
+0x1c KEY_OK
+0x18 KEY_UP
+0x52 KEY_DOWN
+0x08 KEY_LEFT
+0x5a KEY_RIGHT
+0x0c KEY_HOME
+0x07 KEY_VOLUMEDOWN
+0x15 KEY_VOLUMEUP
+
+KEY_name can be listed:
+$ irrecord -l | grep ^KEY
+
+Finally, load custom keytable:
+$ ir-keytable -c -w /storage/.config/rc_keymaps/my_custom_remote
+
+Global lirc function file is /usr/share/kodi/system/Lirmap.xml
